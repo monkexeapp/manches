@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1a15">
+<title>Manches</title>
+<style>
+  :root { --acc:#1fe08a; --card:#1b2421; --card2:rgba(255,255,255,.11); --line:rgba(255,255,255,.2); --dim:rgba(255,255,255,.45); --red:#ff5a62; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+  html,body { margin:0; min-height:100%; }
+  body {
+    color:#fff; font-family:-apple-system,"SF Pro Display",Inter,system-ui,sans-serif; overflow-x:hidden;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(31,224,138,.16), transparent 60%),
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px) 0 0/28px 28px,
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px) 0 0/28px 28px,
+      #0a1a15;
+    background-attachment:fixed;
+    padding:calc(env(safe-area-inset-top,0px) + 60px) 16px calc(env(safe-area-inset-bottom,0px) + 160px);
+  }
+  .wrap { max-width:520px; margin:0 auto; }
+  .mono { font-family:ui-monospace,"SF Mono",Menlo,monospace; }
+
+  .top { display:flex; justify-content:space-between; align-items:center; margin:0 2px 18px; }
+  .top b { font-size:20px; letter-spacing:.02em; }
+  .tag { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); border:1px solid rgba(31,224,138,.4);
+         background:rgba(31,224,138,.08); padding:6px 10px; border-radius:8px; }
+  .tag::before { content:""; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--acc); margin-right:7px; box-shadow:0 0 8px var(--acc); }
+
+  h2 { font-size:11px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--dim); margin:24px 4px 10px; }
+
+  button { font:inherit; color:#fff; cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.10); box-shadow:0 4px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.18); border-radius:18px;
+           transition:transform .12s ease, opacity .25s ease, background .25s ease, border-color .25s ease; }
+  button:active { transform:scale(.97); }
+
+  .arrivee { width:100%; padding:18px; text-align:left; display:flex; justify-content:space-between; align-items:center;
+             border-color:rgba(31,224,138,.6); background:linear-gradient(135deg,rgba(31,224,138,.22),rgba(255,255,255,.10) 70%); }
+  .arrivee small, .pad small { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); }
+  .arrivee span.t { display:block; font-size:16px; font-weight:600; margin-top:5px; }
+  .arrivee .ic { width:38px; height:38px; border-radius:12px; border:1px solid rgba(31,224,138,.5); display:grid; place-items:center; color:var(--acc); font-size:18px; }
+
+  .manche { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .manche.solo { grid-template-columns:1fr; }
+  .go, .stop { padding:20px 10px; font-size:15px; font-weight:600; }
+  .go, .stop { background:var(--acc); color:#05160e; border:0; box-shadow:0 6px 20px rgba(31,224,138,.28); }
+  .stop { background:#a8f5cf; box-shadow:0 6px 20px rgba(168,245,207,.25); }
+  .go.active { box-shadow:0 0 0 3px #fff, 0 0 26px rgba(31,224,138,.7); }
+
+  .pads { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .pad { min-height:112px; padding:12px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; background:var(--card2); }
+  .pad .t2 { display:flex; justify-content:space-between; align-items:flex-start; width:100%; }
+  .pad .cpt { font-size:15px; font-weight:700; color:var(--acc); }
+  .pad.playing .cpt { color:#05160e; }
+  .pad.used .cpt { color:var(--dim); }
+  .pad .n { font-size:22px; font-weight:700; color:rgba(255,255,255,.7); }
+  .pad .nm { font-size:15px; font-weight:600; line-height:1.2; display:inline-block; margin-bottom:4px; }
+  .pad small::before { content:"PRÊT"; }
+
+  .pad.half { background:rgba(255,255,255,.22); border-color:rgba(255,255,255,.45); }
+  .pad.half .cpt, .pad.half small { color:rgba(255,255,255,.8); }
+  .pad.half small::before { content:"DÉJÀ UTILISÉ"; }
+  .pad.playing { background:var(--acc); border-color:var(--acc); color:#05160e; box-shadow:0 0 26px rgba(31,224,138,.6); }
+  .pad.playing .n, .pad.playing small { color:#05160e; }
+  .pad.playing small::before { content:"EN COURS"; }
+  .used { opacity:.45; filter:grayscale(1); border-color:var(--line) !important; background:rgba(255,255,255,.03) !important; box-shadow:none !important; }
+  .pad.used small::before { content:"UTILISÉ"; }
+  .pad.used small { color:var(--dim); }
+  .go.used, .stop.used { color:rgba(255,255,255,.55); border:1px solid var(--line); }
+  .arrivee.used .ic { color:var(--dim); border-color:var(--line); }
+  .arrivee.used small { color:var(--dim); }
+
+  .reset { width:100%; margin-top:22px; padding:17px; font-size:14px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+           background:rgba(255,255,255,.10); color:var(--acc); border:1px solid rgba(31,224,138,.6); }
+
+  .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:24px; z-index:10;
+           background:rgba(3,10,8,.7); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .modal.show { display:flex; }
+  .box { width:100%; max-width:320px; background:var(--card); border:1px solid rgba(31,224,138,.35); border-radius:22px; padding:24px 18px 18px; text-align:center; }
+  .box p { margin:0 0 20px; font-size:19px; font-weight:600; }
+  .box .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .box button { padding:15px 8px; font-weight:600; }
+  .box .oui { background:var(--acc); color:#05160e; border:0; }
+  .tag.off { color:#ffb454; border-color:rgba(255,180,84,.45); background:rgba(255,180,84,.08); }
+  .tag.off::before { background:#ffb454; box-shadow:0 0 8px #ffb454; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><b>Manches</b><span class="tag mono off" id="st">Touche la page</span></div>
+
+  <button class="arrivee" id="arrivee">
+    <div><small class="mono">Entrée</small><span class="t">Arrivée des candidats au bar</span></div>
+    <div class="ic">▶</div>
+  </button>
+
+  <h2>Manches</h2>
+  <div id="manches"></div>
+
+  <button class="reset" id="reset">Réinitialiser</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <p>Valider ?</p>
+    <div class="row">
+      <button class="non" id="non">Annuler</button>
+      <button class="oui" id="oui">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+// ====== A MODIFIER : tes noms de fichiers ======
+const CONFIG = {
+  horlogeDebut: 'sounds/MANCHES.m4a',
+  horlogeFin:   'sounds/FIN MANCHE.m4a',
+  sonPorte:     'sounds/ENTREE.m4a',
+  volumeFin: 2,   // 1 = normal, 2 = deux fois plus fort
+  boucle: true,
+  manches: [
+    { nom: 'Manche 1', ambiances: ['sounds/BOUCLE MANCHES.m4a'] },
+    { nom: 'Manche 2', ambiances: ['sounds/BOUCLE MANCHES.m4a'] },
+    { nom: 'Manche 3', ambiances: ['sounds/BOUCLE MANCHES.m4a'] },
+    { nom: 'Manche finale', ambiances: [], solo: true }
+  ],
+  pads: [
+    'sounds/PAD 01.m4a', 'sounds/PAD 02.m4a', 'sounds/PAD 03.m4a',
+    'sounds/PAD 04.m4a', 'sounds/PAD 05.m4a', 'sounds/PAD 06.m4a',
+    'sounds/PAD 07.m4a', 'sounds/PAD 08.m4a', 'sounds/PAD 09.m4a'
+  ]
+};
+// ===============================================
+
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const cache = {};
+let token = 0, sources = [];
+
+// Charge et décode un son une seule fois (ensuite il est prêt instantanément)
+function load(url) {
+  if (!cache[url]) {
+    cache[url] = fetch(url)
+      .then(r => { if (r.ok === false) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(b => ctx.decodeAudioData(b))
+      .catch(e => { delete cache[url]; throw e; });
+  }
+  return cache[url];
+}
+
+function mkSrc(buf, vol, loop) {
+  const s = ctx.createBufferSource();
+  s.buffer = buf;
+  const g = ctx.createGain();
+  g.gain.value = vol || 1;
+  s.connect(g);
+  g.connect(ctx.destination);
+  if (loop) s.loop = true;
+  return s;
+}
+
+async function play(url, onended, loop, vol) {
+  try {
+    const buf = await load(url);
+    const s = mkSrc(buf, vol, loop);
+    if (onended) s.onended = onended;
+    s.start();
+    return s;
+  } catch (e) { console.warn('Son introuvable :', url); }
+}
+
+function stopManche() {
+  token++;
+  sources.forEach(s => { s.onended = null; try { s.stop(); } catch (e) {} });
+  sources = [];
+  document.querySelectorAll('.go').forEach(b => b.classList.remove('active'));
+}
+
+async function demarrer(i, btn) {
+  stopManche();
+  const t = token;
+  btn.classList.add('active');
+  const m = CONFIG.manches[i];
+  const amb = m.ambiances || [];
+  const debut = m.debut || CONFIG.horlogeDebut;
+  let bufDebut = null, bufsAmb = [];
+  try {
+    const res = await Promise.all([debut ? load(debut) : null, ...amb.map(u => load(u))]);
+    bufDebut = res[0]; bufsAmb = res.slice(1);
+  } catch (e) { console.warn('Son de manche introuvable'); }
+  if (t !== token) return;
+  if (ctx.state !== 'running') { await ctx.resume(); if (t !== token) return; }
+  // Tout est programmé à l'avance : l'ambiance démarre pile à la fin du début de manche
+  let when = ctx.currentTime + 0.03;
+  const list = [];
+  if (bufDebut) { const a = mkSrc(bufDebut); a.start(when); list.push(a); when += bufDebut.duration; }
+  const seul = CONFIG.boucle && bufsAmb.length === 1;
+  bufsAmb.forEach(b => { const a = mkSrc(b, 1, seul); a.start(when); list.push(a); when += b.duration; });
+  if (!bufsAmb.length && list.length) list[list.length - 1].onended = () => { if (t === token) btn.classList.remove('active'); };
+  sources.push(...list);
+}
+
+async function finir(row) {
+  await ctx.resume();
+  stopManche();
+  row.querySelectorAll('button').forEach(b => b.classList.add('used'));
+  await play(CONFIG.horlogeFin, null, false, CONFIG.volumeFin);
+}
+
+const arrivee = document.getElementById('arrivee');
+const modal = document.getElementById('modal');
+arrivee.onclick = () => {
+  if (arrivee.classList.contains('used')) return;
+  modal.classList.add('show');
+};
+document.getElementById('non').onclick = () => modal.classList.remove('show');
+document.getElementById('oui').onclick = async () => {
+  modal.classList.remove('show');
+  arrivee.classList.add('used');
+  await ctx.resume();
+  play(CONFIG.sonPorte);
+};
+
+const mDiv = document.getElementById('manches');
+CONFIG.manches.forEach((m, i) => {
+  const row = document.createElement('div');
+  row.className = 'manche';
+  const go = document.createElement('button');
+  go.className = 'go'; go.textContent = 'Démarrer ' + m.nom;
+  go.onclick = () => { if (!go.classList.contains('used')) demarrer(i, go); };
+  const st = document.createElement('button');
+  st.className = 'stop'; st.textContent = 'Finir ' + m.nom;
+  st.onclick = () => { if (!st.classList.contains('used')) finir(row); };
+  if (m.solo) row.classList.add('solo'); else row.append(st);
+  row.prepend(go);
+  mDiv.append(row);
+});
+
+document.getElementById('reset').onclick = () => {
+  document.querySelectorAll('.arrivee, .manche button').forEach(b => b.classList.remove('used'));
+};
+
+// ====== RÉCEPTION DES PADS (iPhone = télécommande) ======
+const PC_ID = 'bsc-sb-7k2m9x4q';   // doit être identique sur l'iPhone
+const st = document.getElementById('st');
+let conn = null, peer = null;
+let done = 0, total = 1;
+
+function setStatus() {
+  let txt, ok = false;
+  if (done < total) txt = 'Chargement ' + done + '/' + total + '…';
+  else if (ctx.state !== 'running') txt = 'Touche la page';
+  else if (conn && conn.open) { txt = 'Télécommande connectée'; ok = true; }
+  else txt = 'Télécommande en attente';
+  st.textContent = txt;
+  st.classList.toggle('off', !ok);
+}
+ctx.onstatechange = setStatus;
+document.addEventListener('pointerdown', () => { ctx.resume().then(setStatus); });
+
+function envoyer(msg) { try { if (conn && conn.open) conn.send(msg); } catch (e) {} }
+
+const padPlays = {};   // état de chaque pad en cours (pour la pause)
+
+async function startPad(i, offset) {
+  const url = CONFIG.pads[i];
+  if (!url) return;
+  let buf;
+  try { buf = await load(url); } catch (e) { console.warn('Son introuvable :', url); envoyer({ type: 'ended', i }); return; }
+  if (offset >= buf.duration) { delete padPlays[i]; envoyer({ type: 'ended', i }); return; }
+  const s = mkSrc(buf);
+  s.onended = () => {
+    if (padPlays[i] && padPlays[i].src === s) { delete padPlays[i]; envoyer({ type: 'ended', i }); }
+  };
+  s.start(0, offset);
+  padPlays[i] = { src: s, start: ctx.currentTime, offset };
+}
+
+function pausePad(i) {
+  const p = padPlays[i];
+  if (!p || !p.src) return;
+  p.offset += ctx.currentTime - p.start;
+  p.src.onended = null;
+  try { p.src.stop(); } catch (e) {}
+  p.src = null;
+}
+
+function onMsg(msg) {
+  if (!msg) return;
+  if (msg.type === 'pad') { delete padPlays[msg.i]; startPad(msg.i, 0); }
+  else if (msg.type === 'pause') pausePad(msg.i);
+  else if (msg.type === 'resume') { const p = padPlays[msg.i]; if (p && !p.src) startPad(msg.i, p.offset); }
+}
+
+function startPeer() {
+  peer = new Peer(PC_ID);
+  peer.on('open', setStatus);
+  peer.on('connection', c => {
+    conn = c;
+    c.on('open', setStatus);
+    c.on('data', onMsg);
+    const lost = () => { if (conn === c) conn = null; setStatus(); };
+    c.on('close', lost);
+    c.on('error', lost);
+  });
+  peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
+  peer.on('error', e => {
+    if (e.type === 'unavailable-id') {        // ancienne session encore active : on réessaie
+      try { peer.destroy(); } catch (x) {}
+      setTimeout(startPeer, 4000);
+    }
+  });
+  peer.on('close', () => setTimeout(startPeer, 3000));
+}
+// Précharge tous les sons dès l'ouverture : plus aucun délai au lancement
+async function preloadAll() {
+  const urls = new Set([CONFIG.horlogeDebut, CONFIG.horlogeFin, CONFIG.sonPorte, ...CONFIG.pads]);
+  CONFIG.manches.forEach(m => { if (m.debut) urls.add(m.debut); (m.ambiances || []).forEach(u => urls.add(u)); });
+  urls.delete(null); urls.delete(undefined);
+  total = urls.size; done = 0; setStatus();
+  for (const u of urls) {
+    try { await load(u); } catch (e) { console.warn('Son introuvable :', u); }
+    done++; setStatus();
+  }
+}
+
+startPeer();
+preloadAll();
+setStatus();
+</script>
+</body>
+</html>
